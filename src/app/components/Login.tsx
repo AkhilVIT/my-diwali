@@ -118,6 +118,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   "text-center",
                   "text-lg",
                   "font-medium",
+                  "outline-none focus:outline-none focus:ring-0 focus:border-none border-none",
                 ],
                 inputWrapper: [
                   "bg-yellow-500/20",

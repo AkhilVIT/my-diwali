@@ -7,6 +7,29 @@ interface ProgressBarProps {
   onComplete: () => void;
 }
 
+// Declare confetti types
+declare global {
+  interface Window {
+    confetti: (options: unknown) => void;
+  }
+}
+
+interface ConfettiOptions {
+  particleCount?: number;
+  angle?: number;
+  spread?: number;
+  startVelocity?: number;
+  decay?: number;
+  gravity?: number;
+  drift?: number;
+  ticks?: number;
+  origin?: { x: number; y: number };
+  colors?: string[];
+  shapes?: string[];
+  scalar?: number;
+  zIndex?: number;
+}
+
 export default function ProgressBar({ onComplete }: ProgressBarProps) {
   const [progress, setProgress] = useState(0);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
@@ -22,6 +45,47 @@ export default function ProgressBar({ onComplete }: ProgressBarProps) {
       emoji: "🌟",
     },
   ];
+
+  // Confetti function with your specified code
+  const launchConfetti = () => {
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 },
+    };
+
+    function fire(particleRatio: number, opts: ConfettiOptions) {
+      if (typeof window !== "undefined" && window.confetti) {
+        window.confetti({
+          ...defaults,
+          ...opts,
+          particleCount: Math.floor(count * particleRatio),
+        });
+      }
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 55,
+    });
+    fire(0.2, {
+      spread: 60,
+    });
+    fire(0.35, {
+      spread: 100,
+      decay: 0.91,
+      scalar: 0.8,
+    });
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 25,
+      decay: 0.92,
+      scalar: 1.2,
+    });
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 45,
+    });
+  };
 
   useEffect(() => {
     const totalDuration = 4000; // 4 seconds total for progress animation
@@ -47,6 +111,11 @@ export default function ProgressBar({ onComplete }: ProgressBarProps) {
         progressCompleteTime = Date.now();
         setIsComplete(true);
 
+        // Wait 500ms after progress completes, then launch confetti
+        setTimeout(() => {
+          launchConfetti();
+        }, 500);
+
         // Calculate remaining time to meet minimum display time
         const timeElapsed = progressCompleteTime - startTime;
         const remainingTime = Math.max(minimumDisplayTime - timeElapsed, 0);
@@ -65,7 +134,7 @@ export default function ProgressBar({ onComplete }: ProgressBarProps) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [onComplete]); // Removed currentQuoteIndex from dependencies
+  }, [onComplete]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-yellow-500 via-orange-500 to-red-600 p-4">

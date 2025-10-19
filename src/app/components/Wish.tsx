@@ -1,6 +1,12 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  AnimatePresence,
+} from "framer-motion";
 import MusicPlayer from "./MusicPlayer";
 
 export default function Wish() {
@@ -11,35 +17,30 @@ export default function Wish() {
     {
       src: "/pics/1760768897729.jpg",
       title: "My First Glimpse of Forever",
-      subtitle: "The moment my world found its colors",
       message:
-        "From the very first moment, I knew you were someone extraordinary. Your presence doesn't just light up a room—it lights up my entire existence. In your eyes, I found a home I never knew I was searching for.",
+        "From the very first moment, I knew you were someone extraordinary. Your presence doesn't just light up a room, it lights up my entire existence. In your eyes, I found a home I never knew I was searching for.",
     },
     {
       src: "/pics/1760768897745.jpg",
       title: "The Smile That Lights My Soul",
-      subtitle: "Brighter than a thousand sunrises",
       message:
         "Your smile is my favorite sight in this world. It has the power to turn my worst days into beautiful memories. Every time you smile, I feel like the luckiest person alive to witness such pure joy.",
     },
     {
       src: "/pics/1760768897756.jpg",
-      title: "Windows to Our Future",
-      subtitle: "In your eyes, I see our forever",
+      title: "When Words Fail, My Heart Speaks",
       message:
-        "They say eyes are the windows to the soul, and yours show me a future filled with love, laughter, and endless possibilities. In your gaze, I see all the tomorrows I want to experience with you.",
+        "I may seem quiet when I'm with you, but that's because my heart is too loud. Every beat screams how much I love you, every breath whispers your name. Your smile creates a symphony inside me that words could never capture. This feeling - this beautiful, overwhelming, magical feeling, is my favorite place to be, and I never want to leave it.",
     },
     {
       src: "/pics/1760768897765.jpg",
       title: "Magic in the Ordinary",
-      subtitle: "You turn moments into miracles",
       message:
         "You have this incredible ability to find beauty in the simplest moments. With you, every ordinary day feels like a celebration, every quiet moment feels like a precious memory in the making.",
     },
     {
       src: "/pics/1760768897776.jpg",
       title: "My Guiding Light",
-      subtitle: "The flame that never fades",
       message:
         "In the darkness, you are my constant light. In confusion, you are my clarity. In uncertainty, you are my certainty. You are the anchor that keeps me grounded and the star that guides me home.",
     },
@@ -247,9 +248,18 @@ export default function Wish() {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="bg-black/30 backdrop-blur-lg rounded-full px-6 py-2 border border-white/30 shadow-lg">
-          <p className="text-white text-sm font-light tracking-wider">
-            {images[currentImage]?.title.toUpperCase()}
-          </p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={currentImage}
+              className="text-white text-sm font-light tracking-wider"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {images[currentImage]?.title.toUpperCase()}
+            </motion.p>
+          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -276,64 +286,69 @@ export default function Wish() {
 function ImageSection({
   image,
   index,
-  total,
   onView,
 }: {
-  image: { src: string; title: string; subtitle: string; message: string };
+  image: { src: string; title: string; message: string };
   index: number;
   total: number;
   onView: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { margin: "-40% 0px -40% 0px", amount: 0.4 });
+
+  // Use a more sensitive view detection
+  const isInView = useInView(ref, {
+    amount: 0.5, // 20% of element visible
+    once: false, // Keep detecting
+  });
+
+  // Add a separate useEffect to handle the onView callback
+  useEffect(() => {
+    if (isInView) {
+      console.log(`Section ${index} in view: ${image.title}`); // For debugging
+      onView();
+    }
+  }, [isInView, onView, index, image.title]);
+
   const textInView = useInView(textRef, { once: true, amount: 0.3 });
 
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start end", "end start"],
   });
-  function getAspectRatio(index: number): string {
-    // Based on your provided image dimensions:
-    // 2160x3240, 1014x1297, 1014x1562, 1073x1004, 732x557
 
+  function getAspectRatio(index: number): string {
     switch (index) {
-      case 0: // 2160x3240 -> 2:3 ratio
+      case 0:
         return "2/3";
-      case 1: // 1014x1297 -> ~3:4 ratio
+      case 1:
         return "3/4";
-      case 2: // 1014x1562 -> ~2:3 ratio
+      case 2:
         return "2/3";
-      case 3: // 1073x1004 -> ~1:1 ratio
+      case 3:
         return "1/1";
-      case 4: // 732x557 -> ~4:3 ratio
+      case 4:
         return "4/3";
       default:
-        return "3/4"; // Fallback ratio
+        return "3/4";
     }
   }
+
   function getMaxHeight(index: number): string {
     switch (index) {
-      case 0: // 2160x3240 -> 2:3 ratio
+      case 0:
         return "85vh";
-      case 1: // 1014x1297 -> ~3:4 ratio
+      case 1:
         return "85vh";
-      case 2: // 1014x1562 -> ~2:3 ratio
+      case 2:
         return "85vh";
-      case 3: // 1073x1004 -> ~1:1 ratio
+      case 3:
         return "60vh";
-      case 4: // 732x557 -> ~4:3 ratio
+      case 4:
         return "60vh";
       default:
-        return "85vh"; // Fallback ratio
+        return "85vh";
     }
-  }
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1, 0.85]);
-  const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.5, 1], [50, 0, -50]);
-
-  if (isInView) {
-    onView();
   }
 
   return (
@@ -367,7 +382,6 @@ function ImageSection({
         className="relative rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-lg border border-white/40"
         whileHover={{ scale: 1.02 }}
         transition={{ type: "spring", stiffness: 300 }}
-        // Scroll reveal animation
         initial={{ opacity: 0, y: 50, scale: 0.95 }}
         whileInView={{
           opacity: 1,
@@ -378,12 +392,12 @@ function ImageSection({
             stiffness: 100,
             damping: 15,
             duration: 0.8,
-            delay: index * 0.2, // Staggered animation based on index
+            delay: index * 0.2,
           },
         }}
         viewport={{
           once: true,
-          margin: "-50px", // Starts animation when 50px from viewport
+          margin: "-50px",
         }}
       >
         <motion.img
@@ -391,20 +405,11 @@ function ImageSection({
           alt={image.title}
           className="w-full h-auto"
           style={{
-            // Responsive height control
             maxHeight: getMaxHeight(index),
-
-            // Dynamic aspect ratio based on image dimensions
             aspectRatio: getAspectRatio(index),
-
-            // Optimal image rendering
             objectFit: "cover",
             objectPosition: "center",
-            // Performance optimization
-            // loading: "lazy",
-            // decoding: "async",
           }}
-          // Additional scroll reveal for image specifically
           initial={{ scale: 1.1, opacity: 0 }}
           whileInView={{
             scale: 1,
@@ -416,7 +421,6 @@ function ImageSection({
             },
           }}
           viewport={{ once: true }}
-          // Smooth scale on hover
           whileHover={{ scale: 1.01 }}
           transition={{ duration: 1.5 }}
         />
@@ -457,36 +461,18 @@ function ImageSection({
             }
             transition={{ duration: 0.8, delay: 0.6, type: "spring" }}
           >
-            {index === 4 ? "🔥" : "💫"}
+            {index === 0 && "💫"}
+            {index === 1 && "😍"}
+            {index === 2 && "🫶"}
+            {index === 3 && "🥰"}
+            {index === 4 && "✨"}
           </motion.div>
 
           <TypewriterText text={image.message} delay={0.8} />
         </div>
       </motion.div>
 
-      {/* Progress Indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-4"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
-      >
-        <span className="text-gray-700 text-sm font-medium bg-white/50 backdrop-blur-sm rounded-full px-3 py-1">
-          {index + 1} of {total}
-        </span>
-        <div className="flex gap-2">
-          {Array.from({ length: total }).map((_, i) => (
-            <motion.div
-              key={i}
-              className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                i === index
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 scale-125 shadow-lg"
-                  : "bg-white/60"
-              }`}
-            />
-          ))}
-        </div>
-      </motion.div>
+      {/* Progress Indicator REMOVED */}
     </section>
   );
 }
@@ -745,7 +731,7 @@ function RealisticDiyaSection() {
                   <img
                     src="/pics/1760768897776.jpg"
                     alt="My eternal flame"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover opacity-65"
                   />
                   {/* Reduced overlay opacity to make face more visible */}
                   <div className="absolute inset-0 bg-yellow-200/20 mix-blend-overlay" />
@@ -791,7 +777,7 @@ function RealisticDiyaSection() {
           transition={{ duration: 1, delay: 0.5 }}
         >
           <TypewriterText
-            text="You are not just a part of my life; you are the light that makes my life worth living. Like this eternal diya flame, your love illuminates my darkest moments and guides me toward happiness. Every day with you feels like Diwali—filled with light, love, and the promise of forever. You are my greatest blessing, my constant joy, and the beautiful flame that will forever burn in my heart."
+            text="You are the sunrise to my darkest nights, the melody to my silent heart. Like this eternal flame, your love burns away my fears and illuminates my path to joy. With you, life feels like an endless Diwali - every moment sparkling with love, every memory glowing with promise. You are my miracle, my constant wonder, and the beautiful light that will forever dance in my soul."
             delay={0.8}
           />
 
